@@ -1,5 +1,7 @@
 package com.example.xmlapi.controller;
 
+import com.example.xmlapi.exception.XmlApiException;
+import com.example.xmlapi.exception.XmlApiExceptionDTO;
 import com.example.xmlapi.model.Epaper;
 import com.example.xmlapi.service.EpaperService;
 import lombok.AccessLevel;
@@ -8,11 +10,16 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletException;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
 
 @Controller
@@ -33,5 +40,25 @@ public class EpaperController {
         log.info("XmlApiLog: File successfully uploaded.");
 
         return ResponseEntity.status(CREATED).body(epaper.getId());
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    ResponseEntity<XmlApiExceptionDTO> handleException(MultipartException exception) {
+        log.debug("MultipartException: " + exception.getMessage());
+        return ResponseEntity.status(BAD_REQUEST).body(
+                XmlApiExceptionDTO.from(new XmlApiException(exception.getMessage())));
+    }
+
+    @ExceptionHandler(ServletException.class)
+    ResponseEntity<XmlApiExceptionDTO> handleException(ServletException exception) {
+        log.debug("ServletException: " + exception.getMessage());
+        return ResponseEntity.status(BAD_REQUEST).body(
+                XmlApiExceptionDTO.from(new XmlApiException(exception.getMessage())));
+    }
+
+    @ExceptionHandler(XmlApiException.class)
+    ResponseEntity<XmlApiExceptionDTO> handleException(XmlApiException exception) {
+        log.debug("XmlApiLog: XmlApiException: " + exception.getMessage());
+        return ResponseEntity.status(exception.getHttpStatus()).body(XmlApiExceptionDTO.from(exception));
     }
 }
