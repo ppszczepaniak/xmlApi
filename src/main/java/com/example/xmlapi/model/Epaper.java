@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.util.Objects;
 
 @Entity
+@Getter
 @Table(name = "e_paper")
 @AllArgsConstructor
 @NoArgsConstructor
