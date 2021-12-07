@@ -9,9 +9,17 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.xml.sax.SAXException;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
@@ -27,19 +35,19 @@ public class EpaperServiceImpl implements EpaperService {
 
     EpaperRepository epaperRepository;
     XmlMapper xmlMapper;
+    ResourceLoader resourceLoader;
 
     @Override
     public Epaper processFile(MultipartFile file) {
 
-        if (file.isEmpty()) {
-            log.debug("XmlApiLog: No or empty file uploaded.");
-            throw new XmlApiException("No file uploaded or uploaded file is empty.", BAD_REQUEST);
-        }
+        //validate
+        validate(file);
 
+        //parse
         EpaperRequest epaperRequest = parseXmlFile(file);
 
+        //persist
         final EpaperRequest.ScreenInfo screenInfo = epaperRequest.getDeviceInfo().getScreenInfo();
-
         return epaperRepository.saveAndFlush(Epaper.builder()
                 .newspaperName(epaperRequest.getDeviceInfo().getAppInfo().getNewspaperName())
                 .width(screenInfo.getWidth())
@@ -63,4 +71,40 @@ public class EpaperServiceImpl implements EpaperService {
         log.info("XmlApiLog: file successfully parsed.");
         return epaperRequest;
     }
+
+    private void validate(MultipartFile file) {
+        if (file.isEmpty()) {
+            log.debug("XmlApiLog: No or empty file uploaded.");
+            throw new XmlApiException("No file uploaded or uploaded file is empty.", BAD_REQUEST);
+        }
+        validateWithXsd(file);
+    }
+
+    private void validateWithXsd(MultipartFile file) {
+        final String xsdSchema = readXsdSchemaFile();
+
+        try {
+            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            Validator validator = factory.newSchema(new File(xsdSchema)).newValidator();
+            Source xmlFile = new StreamSource(file.getInputStream());
+            validator.validate(xmlFile);
+            log.info("XmlApiLog: file " + file.getResource().getFilename() + " is valid.");
+        } catch (SAXException e) {
+            log.info("XmlApiLog: Error: file " + file.getResource().getFilename() + " is not valid. Reason:" + e);
+            throw new XmlApiException("Invalid XML file.", BAD_REQUEST);
+        } catch (IOException e) {
+            log.info("XmlApiLog: Error during validation: " + e.getMessage());
+            throw new XmlApiException("Error while getting access to file content.");
+        }
+    }
+
+    private String readXsdSchemaFile() {
+        try {
+            return resourceLoader.getResource("classpath:xsdSchema/schema.xsd").getFile().toString();
+        } catch (IOException e) {
+            log.info("XmlApiLog: can't read xsd schema file: " + e.getMessage());
+            throw new XmlApiException("Internal error.");
+        }
+    }
+
 }
