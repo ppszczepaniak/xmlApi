@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartException;
@@ -45,24 +46,17 @@ public class EpaperController {
     }
 
     @GetMapping(value = "/epapers")
-    public ResponseEntity<Map<String, Object>> findAllPaged(@RequestParam(required = false) String newspaperName,
+    public ResponseEntity<Map<String, Object>> findAllPaged(@RequestBody(required = false) Epaper epaperFilter,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "5") int size,
                                                             @RequestParam(defaultValue = "id,asc") String[] sort) {
-        log.info("XmlApiLog: Getting all entities with settings: page = {}, size = {}, sort = {}, newspaperName = {}", page, size, sort, newspaperName);
+        log.info("XmlApiLog: Getting all entities with settings: page = {}, size = {}, sort = {}, filteredBy = {}", page, size, sort, epaperFilter);
 
         validateSortParameter(sort);
 
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.by(new Sort.Order(findDirection(sort[1]), sort[0])));
-            Page<Epaper> pagedEpapers;
-
-            if (newspaperName == null || newspaperName.isBlank()) {
-                pagedEpapers = epaperService.findAll(pageable);
-            } else {
-                pagedEpapers = epaperService.findAllByNewspaperName(newspaperName, pageable);
-            }
-
+            Page<Epaper> pagedEpapers = epaperService.findAllMatchingEpapersBy(epaperFilter, pageable);
             List<Epaper> epaperList = pagedEpapers.getContent();
             if (epaperList.isEmpty()) {
                 return new ResponseEntity<>(NO_CONTENT);
@@ -111,6 +105,13 @@ public class EpaperController {
     @ExceptionHandler(ServletException.class)
     ResponseEntity<XmlApiExceptionDTO> handleException(ServletException exception) {
         log.debug("ServletException: " + exception.getMessage());
+        return ResponseEntity.status(BAD_REQUEST).body(
+                XmlApiExceptionDTO.from(new XmlApiException(exception.getMessage())));
+    }
+
+    @ExceptionHandler(HttpMessageConversionException.class)
+    ResponseEntity<XmlApiExceptionDTO> handleException(HttpMessageConversionException exception) {
+        log.debug("HttpMessageConversionException: " + exception.getMessage());
         return ResponseEntity.status(BAD_REQUEST).body(
                 XmlApiExceptionDTO.from(new XmlApiException(exception.getMessage())));
     }

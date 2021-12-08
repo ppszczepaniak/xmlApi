@@ -10,7 +10,5 @@ public interface EpaperService {
 
     Epaper findById(Long id);
 
-    Page<Epaper> findAll(Pageable pageable);
-
-    Page<Epaper> findAllByNewspaperName(String newspaperName, Pageable pageable);
+    Page<Epaper> findAllMatchingEpapersBy(Epaper epaperFilter, Pageable pageable);
 }

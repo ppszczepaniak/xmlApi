@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -70,16 +71,11 @@ public class EpaperServiceImpl implements EpaperService {
     }
 
     @Override
-    public Page<Epaper> findAll(Pageable pageable) {
-        Page<Epaper> pagedEpapers = epaperRepository.findAll(pageable);
-        log.info("XmlApiLog: " + pagedEpapers.getTotalElements() + " entities found.");
-        return pagedEpapers;
-    }
-
-    @Override
-    public Page<Epaper> findAllByNewspaperName(String newspaperName, Pageable pageable) {
-        Page<Epaper> pagedEpapers = epaperRepository.findAllByNewspaperName(newspaperName, pageable);
-        log.info("XmlApiLog: " + pagedEpapers.getTotalElements() + " entities found.");
+    public Page<Epaper> findAllMatchingEpapersBy(Epaper epaperFilter, Pageable pageable) {
+        Page<Epaper> pagedEpapers = (epaperFilter == null)
+                ? epaperRepository.findAll(pageable)
+                : epaperRepository.findAll(Example.of(epaperFilter), pageable);
+        log.info("XmlApiLog: " + pagedEpapers.getTotalElements() + " epaper(s) found.");
         return pagedEpapers;
     }
 
