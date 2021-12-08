@@ -10,6 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
@@ -24,7 +26,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -40,7 +41,7 @@ public class EpaperServiceImpl implements EpaperService {
     ResourceLoader resourceLoader;
 
     @Override
-    public Epaper processFile(MultipartFile file) {
+    public Epaper persistEpaperFrom(MultipartFile file) {
 
         //validate
         validate(file);
@@ -62,10 +63,10 @@ public class EpaperServiceImpl implements EpaperService {
     }
 
     @Override
-    public List<Epaper> findAll() {
-        List<Epaper> epaperList = epaperRepository.findAll();
-        log.info("XmlApiLog: " + epaperList.size() + " entities found.");
-        return epaperList;
+    public Page<Epaper> findAll(Pageable pageable) {
+        Page<Epaper> pagedEpapers = epaperRepository.findAll(pageable);
+        log.info("XmlApiLog: " + pagedEpapers.getTotalElements() + " entities found.");
+        return epaperRepository.findAll(pageable);
     }
 
     @Override

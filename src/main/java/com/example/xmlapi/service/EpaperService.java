@@ -1,15 +1,15 @@
 package com.example.xmlapi.service;
 
 import com.example.xmlapi.model.Epaper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 public interface EpaperService {
 
-    Epaper processFile(MultipartFile file);
+    Epaper persistEpaperFrom(MultipartFile file);
 
-    List<Epaper> findAll();
+    Page<Epaper> findAll(Pageable pageable);
 
     Epaper findById(Long id);
 }
