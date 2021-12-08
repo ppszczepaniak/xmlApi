@@ -90,12 +90,6 @@ public class EpaperController {
         return "desc".equals(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
     }
 
-    @GetMapping(value = "/epapers/{id}")
-    public ResponseEntity<Epaper> findById(@PathVariable Long id) {
-        log.info("XmlApiLog: Getting all entities.");
-        return ResponseEntity.status(OK).body(epaperService.findById(id));
-    }
-
     @ExceptionHandler(MultipartException.class)
     ResponseEntity<XmlApiExceptionDTO> handleException(MultipartException exception) {
         log.debug("MultipartException: " + exception.getMessage());

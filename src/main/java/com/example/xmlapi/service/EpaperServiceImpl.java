@@ -33,7 +33,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @Slf4j
@@ -65,13 +64,6 @@ public class EpaperServiceImpl implements EpaperService {
                 .uploadTime(Timestamp.valueOf(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)))
                 .build()
         );
-    }
-
-    @Override
-    public Epaper findById(Long id) {
-        return epaperRepository
-                .findById(id)
-                .orElseThrow(() -> new XmlApiException("Epaper with id = " + id + " does not exist.", NOT_FOUND));
     }
 
     @Override

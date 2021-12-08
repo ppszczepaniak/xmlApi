@@ -9,7 +9,5 @@ import org.springframework.web.multipart.MultipartFile;
 public interface EpaperService {
     Epaper persistEpaperFrom(MultipartFile file);
 
-    Epaper findById(Long id);
-
     Page<Epaper> findAllMatchingEpapersBy(EpaperDTO epaperFilter, Pageable pageable);
 }
