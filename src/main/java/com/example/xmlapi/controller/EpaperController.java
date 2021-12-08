@@ -3,6 +3,7 @@ package com.example.xmlapi.controller;
 import com.example.xmlapi.exception.XmlApiException;
 import com.example.xmlapi.exception.XmlApiExceptionDTO;
 import com.example.xmlapi.model.Epaper;
+import com.example.xmlapi.model.EpaperDTO;
 import com.example.xmlapi.service.EpaperService;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -46,7 +47,7 @@ public class EpaperController {
     }
 
     @GetMapping(value = "/epapers")
-    public ResponseEntity<Map<String, Object>> findAllPaged(@RequestBody(required = false) Epaper epaperFilter,
+    public ResponseEntity<Map<String, Object>> findAllPaged(@RequestBody(required = false) EpaperDTO epaperFilter,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "5") int size,
                                                             @RequestParam(defaultValue = "id,asc") String[] sort) {

@@ -2,6 +2,7 @@ package com.example.xmlapi.service;
 
 import com.example.xmlapi.exception.XmlApiException;
 import com.example.xmlapi.model.Epaper;
+import com.example.xmlapi.model.EpaperDTO;
 import com.example.xmlapi.model.EpaperRequest;
 import com.example.xmlapi.repository.EpaperRepository;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -71,10 +72,22 @@ public class EpaperServiceImpl implements EpaperService {
     }
 
     @Override
-    public Page<Epaper> findAllMatchingEpapersBy(Epaper epaperFilter, Pageable pageable) {
-        Page<Epaper> pagedEpapers = (epaperFilter == null)
-                ? epaperRepository.findAll(pageable)
-                : epaperRepository.findAll(Example.of(epaperFilter), pageable);
+    public Page<Epaper> findAllMatchingEpapersBy(EpaperDTO epaperFilter, Pageable pageable) {
+        Page<Epaper> pagedEpapers;
+        if (epaperFilter == null) {
+            pagedEpapers = epaperRepository.findAll(pageable);
+        } else {
+            Epaper epaperExample = Epaper.builder()
+                    .id(epaperFilter.getId())
+                    .newspaperName(epaperFilter.getNewspaperName())
+                    .dpi(epaperFilter.getDpi())
+                    .height(epaperFilter.getHeight())
+                    .width(epaperFilter.getWidth())
+                    .uploadTime(epaperFilter.getUploadTime())
+                    .fileName(epaperFilter.getFileName())
+                    .build();
+            pagedEpapers = epaperRepository.findAll(Example.of(epaperExample), pageable);
+        }
         log.info("XmlApiLog: " + pagedEpapers.getTotalElements() + " epaper(s) found.");
         return pagedEpapers;
     }
