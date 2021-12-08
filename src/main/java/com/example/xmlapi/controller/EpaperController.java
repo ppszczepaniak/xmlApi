@@ -10,17 +10,15 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletException;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CREATED;
+import java.util.List;
+
+import static org.springframework.http.HttpStatus.*;
 
 @Controller
 @AllArgsConstructor
@@ -31,7 +29,7 @@ public class EpaperController {
 
     EpaperService epaperService;
 
-    @PostMapping(value = "/upload")
+    @PostMapping(value = "/epapers")
     public ResponseEntity<Long> uploadFile(@RequestParam("file") MultipartFile file) {
         log.info("XmlApiLog: Request processing started.");
 
@@ -40,6 +38,18 @@ public class EpaperController {
         log.info("XmlApiLog: File successfully uploaded.");
 
         return ResponseEntity.status(CREATED).body(epaper.getId());
+    }
+
+    @GetMapping(value = "/epapers")
+    public ResponseEntity<List<Epaper>> findAll() {
+        log.info("XmlApiLog: Getting all entities.");
+        return ResponseEntity.status(OK).body(epaperService.findAll());
+    }
+
+    @GetMapping(value = "/epaper/{id}")
+    public ResponseEntity<Epaper> findAll(@PathVariable Long id) {
+        log.info("XmlApiLog: Getting all entities.");
+        return ResponseEntity.status(OK).body(epaperService.findById(id));
     }
 
     @ExceptionHandler(MultipartException.class)

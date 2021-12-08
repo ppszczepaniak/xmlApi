@@ -24,8 +24,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @Slf4j
@@ -57,6 +59,18 @@ public class EpaperServiceImpl implements EpaperService {
                 .uploadTime(Timestamp.valueOf(LocalDateTime.now()))
                 .build()
         );
+    }
+
+    @Override
+    public List<Epaper> findAll() {
+        return epaperRepository.findAll();
+    }
+
+    @Override
+    public Epaper findById(Long id) {
+        return epaperRepository
+                .findById(id)
+                .orElseThrow(() -> new XmlApiException("Epaper with id = " + id + " does not exist.", NOT_FOUND));
     }
 
     private EpaperRequest parseXmlFile(MultipartFile file) {
