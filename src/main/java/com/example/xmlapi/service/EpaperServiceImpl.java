@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -59,7 +60,7 @@ public class EpaperServiceImpl implements EpaperService {
                 .height(screenInfo.getHeight())
                 .dpi(screenInfo.getDpi())
                 .fileName(file.getResource().getFilename())
-                .uploadTime(Timestamp.valueOf(LocalDateTime.now()))
+                .uploadTime(Timestamp.valueOf(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)))
                 .build()
         );
     }
