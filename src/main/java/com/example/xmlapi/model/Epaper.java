@@ -6,17 +6,19 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.Hibernate;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Objects;
 
 @Entity
 @Getter
+@ToString
 @Table(name = "e_paper")
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Epaper {
+public class Epaper implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
