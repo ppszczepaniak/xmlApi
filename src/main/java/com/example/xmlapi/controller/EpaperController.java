@@ -19,8 +19,7 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -32,6 +31,7 @@ import static org.springframework.http.HttpStatus.*;
 public class EpaperController {
 
     EpaperService epaperService;
+    static List<String> VALID_SORT_PARAMS = List.of("asc", "desc", "id", "newspaperName", "width", "height", "dpi", "uploadTime", "fileName");
 
     @PostMapping(value = "/epapers")
     public ResponseEntity<Long> uploadFile(@RequestParam("file") MultipartFile file) {
@@ -51,16 +51,16 @@ public class EpaperController {
             @RequestParam(defaultValue = "id,asc") String[] sort) {
         log.info("XmlApiLog: Getting all entities with settings: page = {}, size = {}, sort = {}", page, size, sort);
 
+        validateSortParameter(sort);
+
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.by(new Sort.Order(findDirection(sort[1]), sort[0])));
-            Page<Epaper> pagedEpapers;
-            pagedEpapers = epaperService.findAll(pageable);
-
+            Page<Epaper> pagedEpapers = epaperService.findAll(pageable);
             List<Epaper> epaperList = pagedEpapers.getContent();
             if (epaperList.isEmpty()) {
                 return new ResponseEntity<>(NO_CONTENT);
             } else {
-                return ResponseEntity.status(OK).body(Map.of(
+                return ResponseEntity.ok(Map.of(
                         "epapers", epaperList,
                         "currentPage", pagedEpapers.getNumber(),
                         "totalItems", pagedEpapers.getTotalElements(),
@@ -71,6 +71,16 @@ public class EpaperController {
         } catch (Exception e) {
             log.info("XmlApiLog: Error while processing the request: " + e.getMessage());
             throw new XmlApiException("Error while processing the request");
+        }
+    }
+
+    private static void validateSortParameter(String[] sort) {
+        Set<String> sortFromRequest = new HashSet<>(Arrays.asList(sort));
+        VALID_SORT_PARAMS.forEach(sortFromRequest::remove);
+
+        if (!sortFromRequest.isEmpty()) {
+            log.info("XmlApiLog: invalid value(s) in sort parameter: " + sortFromRequest);
+            throw new XmlApiException("Invalid value(s) in sort parameter: " + sortFromRequest, BAD_REQUEST);
         }
     }
 
