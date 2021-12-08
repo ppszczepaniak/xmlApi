@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,6 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,22 +47,35 @@ public class EpaperController {
     @GetMapping(value = "/epapers")
     public ResponseEntity<Map<String, Object>> findAllPaged(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size
-    ) {
-        Pageable pageable = PageRequest.of(page, size);
-        log.info("XmlApiLog: Getting all entities with settings: page = {}, size = {}", page, size);
-        Page<Epaper> pagedEpapers = epaperService.findAll(pageable);
-        List<Epaper> epaperList = pagedEpapers.getContent();
-        if (epaperList.isEmpty()) {
-            return new ResponseEntity<>(NO_CONTENT);
-        }
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+        log.info("XmlApiLog: Getting all entities with settings: page = {}, size = {}, sort = {}", page, size, sort);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("epapers", epaperList);
-        response.put("currentPage", pagedEpapers.getNumber());
-        response.put("totalItems", pagedEpapers.getTotalElements());
-        response.put("totalPages", pagedEpapers.getTotalPages());
-        return ResponseEntity.status(OK).body(response);
+        try {
+            Pageable pageable = PageRequest.of(page, size, Sort.by(new Sort.Order(findDirection(sort[1]), sort[0])));
+            Page<Epaper> pagedEpapers;
+            pagedEpapers = epaperService.findAll(pageable);
+
+            List<Epaper> epaperList = pagedEpapers.getContent();
+            if (epaperList.isEmpty()) {
+                return new ResponseEntity<>(NO_CONTENT);
+            } else {
+                return ResponseEntity.status(OK).body(Map.of(
+                        "epapers", epaperList,
+                        "currentPage", pagedEpapers.getNumber(),
+                        "totalItems", pagedEpapers.getTotalElements(),
+                        "totalPages", pagedEpapers.getTotalPages()
+                ));
+            }
+
+        } catch (Exception e) {
+            log.info("XmlApiLog: Error while processing the request: " + e.getMessage());
+            throw new XmlApiException("Error while processing the request");
+        }
+    }
+
+    private static Sort.Direction findDirection(String direction) {
+        return "desc".equals(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
     }
 
     @GetMapping(value = "/epapers/{id}")
@@ -90,4 +103,5 @@ public class EpaperController {
         log.debug("XmlApiLog: XmlApiException: " + exception.getMessage());
         return ResponseEntity.status(exception.getHttpStatus()).body(XmlApiExceptionDTO.from(exception));
     }
+
 }
