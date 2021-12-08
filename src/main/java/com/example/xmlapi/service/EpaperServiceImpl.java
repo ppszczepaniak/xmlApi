@@ -10,7 +10,8 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ResourceLoader;
+import org.apache.commons.io.FileUtils;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -41,7 +43,7 @@ public class EpaperServiceImpl implements EpaperService {
 
     EpaperRepository epaperRepository;
     XmlMapper xmlMapper;
-    ResourceLoader resourceLoader;
+    File XSD_SCHEMA_FILE = readXsdSchemaFile();
 
     @Override
     public Epaper persistEpaperFrom(MultipartFile file) {
@@ -115,11 +117,9 @@ public class EpaperServiceImpl implements EpaperService {
     }
 
     private void validateWithXsd(MultipartFile file) {
-        final String xsdSchema = readXsdSchemaFile();
-
         try {
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-            Validator validator = factory.newSchema(new File(xsdSchema)).newValidator();
+            Validator validator = factory.newSchema(XSD_SCHEMA_FILE).newValidator();
             Source xmlFile = new StreamSource(file.getInputStream());
             validator.validate(xmlFile);
             log.info("XmlApiLog: file " + file.getResource().getFilename() + " is valid.");
@@ -132,13 +132,15 @@ public class EpaperServiceImpl implements EpaperService {
         }
     }
 
-    private String readXsdSchemaFile() {
-        try {
-            return resourceLoader.getResource("classpath:xsdSchema/schema.xsd").getFile().toString();
+    private static File readXsdSchemaFile() {
+        ClassPathResource cpr = new ClassPathResource("xsdSchema/schema.xsd");
+        try (InputStream inputStream = cpr.getInputStream()) {
+            File tempSchemaFile = File.createTempFile("schema", ".xsd");
+            FileUtils.copyInputStreamToFile(inputStream, tempSchemaFile);
+            return tempSchemaFile;
         } catch (IOException e) {
             log.info("XmlApiLog: can't read xsd schema file: " + e.getMessage());
             throw new XmlApiException("Internal error.");
         }
     }
-
 }
