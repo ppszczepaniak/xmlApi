@@ -63,7 +63,9 @@ public class EpaperServiceImpl implements EpaperService {
 
     @Override
     public List<Epaper> findAll() {
-        return epaperRepository.findAll();
+        List<Epaper> epaperList = epaperRepository.findAll();
+        log.info("XmlApiLog: " + epaperList.size() + " entities found.");
+        return epaperList;
     }
 
     @Override

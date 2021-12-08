@@ -43,7 +43,12 @@ public class EpaperController {
     @GetMapping(value = "/epapers")
     public ResponseEntity<List<Epaper>> findAll() {
         log.info("XmlApiLog: Getting all entities.");
-        return ResponseEntity.status(OK).body(epaperService.findAll());
+        List<Epaper> epaperList = epaperService.findAll();
+        if (epaperList.isEmpty()) {
+            return new ResponseEntity<>(NO_CONTENT);
+        }
+
+        return ResponseEntity.status(OK).body(epaperList);
     }
 
     @GetMapping(value = "/epaper/{id}")
