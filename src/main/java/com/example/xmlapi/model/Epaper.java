@@ -1,5 +1,6 @@
 package com.example.xmlapi.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.Hibernate;
@@ -24,6 +25,7 @@ public class Epaper {
     Integer width;
     Integer height;
     Integer dpi;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     Timestamp uploadTime;
     String fileName;
 
