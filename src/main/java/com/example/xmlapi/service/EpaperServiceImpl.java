@@ -63,17 +63,24 @@ public class EpaperServiceImpl implements EpaperService {
     }
 
     @Override
-    public Page<Epaper> findAll(Pageable pageable) {
-        Page<Epaper> pagedEpapers = epaperRepository.findAll(pageable);
-        log.info("XmlApiLog: " + pagedEpapers.getTotalElements() + " entities found.");
-        return epaperRepository.findAll(pageable);
-    }
-
-    @Override
     public Epaper findById(Long id) {
         return epaperRepository
                 .findById(id)
                 .orElseThrow(() -> new XmlApiException("Epaper with id = " + id + " does not exist.", NOT_FOUND));
+    }
+
+    @Override
+    public Page<Epaper> findAll(Pageable pageable) {
+        Page<Epaper> pagedEpapers = epaperRepository.findAll(pageable);
+        log.info("XmlApiLog: " + pagedEpapers.getTotalElements() + " entities found.");
+        return pagedEpapers;
+    }
+
+    @Override
+    public Page<Epaper> findAllByNewspaperName(String newspaperName, Pageable pageable) {
+        Page<Epaper> pagedEpapers = epaperRepository.findAllByNewspaperName(newspaperName, pageable);
+        log.info("XmlApiLog: " + pagedEpapers.getTotalElements() + " entities found.");
+        return pagedEpapers;
     }
 
     private EpaperRequest parseXmlFile(MultipartFile file) {

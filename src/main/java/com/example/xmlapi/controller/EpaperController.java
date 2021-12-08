@@ -45,17 +45,24 @@ public class EpaperController {
     }
 
     @GetMapping(value = "/epapers")
-    public ResponseEntity<Map<String, Object>> findAllPaged(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort) {
-        log.info("XmlApiLog: Getting all entities with settings: page = {}, size = {}, sort = {}", page, size, sort);
+    public ResponseEntity<Map<String, Object>> findAllPaged(@RequestParam(required = false) String newspaperName,
+                                                            @RequestParam(defaultValue = "0") int page,
+                                                            @RequestParam(defaultValue = "5") int size,
+                                                            @RequestParam(defaultValue = "id,asc") String[] sort) {
+        log.info("XmlApiLog: Getting all entities with settings: page = {}, size = {}, sort = {}, newspaperName = {}", page, size, sort, newspaperName);
 
         validateSortParameter(sort);
 
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.by(new Sort.Order(findDirection(sort[1]), sort[0])));
-            Page<Epaper> pagedEpapers = epaperService.findAll(pageable);
+            Page<Epaper> pagedEpapers;
+
+            if (newspaperName == null || newspaperName.isBlank()) {
+                pagedEpapers = epaperService.findAll(pageable);
+            } else {
+                pagedEpapers = epaperService.findAllByNewspaperName(newspaperName, pageable);
+            }
+
             List<Epaper> epaperList = pagedEpapers.getContent();
             if (epaperList.isEmpty()) {
                 return new ResponseEntity<>(NO_CONTENT);

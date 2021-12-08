@@ -6,10 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface EpaperService {
-
     Epaper persistEpaperFrom(MultipartFile file);
+
+    Epaper findById(Long id);
 
     Page<Epaper> findAll(Pageable pageable);
 
-    Epaper findById(Long id);
+    Page<Epaper> findAllByNewspaperName(String newspaperName, Pageable pageable);
 }
