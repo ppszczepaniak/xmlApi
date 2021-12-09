@@ -2,7 +2,7 @@
 
 # xmlApi
 
-Simple XML to JSON API that allows to uploading .xml files, validating them against
+Simple API that allows to uploading .xml files, validating them against
 included [XSD schema](https://github.com/ppszczepaniak/xmlApi/blob/master/src/main/resources/xsdSchema/schema.xsd),
 persisting parsed data into SQL database and easy retrieving for frontend purposes. <br>
 Databases used: attached dockerized PostgreSQL and in-memory H2 (for testing purposes).
@@ -12,28 +12,38 @@ Databases used: attached dockerized PostgreSQL and in-memory H2 (for testing pur
 
 ## How to run
 
-Application can be run via this command:<br>
+Application can be run via this command (assuming that [docker compose](https://docs.docker.com/compose/install/)) is
+installed in the system:<br>
+
 ```
 mvn clean package -DskipTests && docker-compose build && docker-compose up
  ```
+
 Starts on: `localhost:8080`<br>
 Clean shut-down via:
 `docker-compose down -v
 `
 
+If only *docker* is installed, one can run the application via, for example:
+
+```
+docker run --name postgres-docker -p 5432:5432 -e POSTGRES_PASSWORD=postgres -itd postgres:latest && mvn clean install -DskipTests && mvn spring-boot:run 
+```
 
 --------------
+
 ## Available Endpoints
 
 * `POST /api/epapers`<br>requires valid xml Multipart file attached in request body parameter `file`. Successful request
-  returns 201 and entity ID.
+  returns 201 and entity ID. Unsuccessful requests return JSON responses, with informative error messages if no, empty
+  or invalid file is uploaded. <br>
 
   Sample Postman settings:<br>
   ![img.png](src/main/resources/images/img.png)
 
 
-* `GET /api/epapers`<br> retrieves persisted Epaper entities. Endpoint allows paging, sorting and filtering. Accepted
-  parameters:
+* `GET /api/epapers`<br> retrieves persisted Epaper entities. Endpoint allows paging, sorting and filtering.
+  Unsuccessful requests return JSON responses, with informative error messages. Accepted parameters:
   * `page` & `size` for paging;
   * `sort`, which expects `key,value` pair where:
     * **key** = entity property (see json below), e.g. `id`or`newspaperName`,
