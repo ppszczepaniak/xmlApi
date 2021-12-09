@@ -7,6 +7,9 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -18,6 +21,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -39,8 +43,6 @@ class EpaperControllerTest extends TestBase {
 
     @InjectMocks
     EpaperController epaperController;
-
-    final static String INVALID_PARAM = "invalid_param";
 
     @SneakyThrows
     @BeforeEach
@@ -70,13 +72,36 @@ class EpaperControllerTest extends TestBase {
     }
 
     @SneakyThrows
-    @Test
-    void gettingEpapersWithinvalidSortParameterShouldReturnBadRequestWithProperExceptionMessage() {
-        MvcResult result = mockMvc.perform(get("/api/epapers").param("sort", INVALID_PARAM))
+    @ParameterizedTest
+    @MethodSource("sortTestParams")
+    void gettingEpapersWithinvalidSortParameterShouldReturnBadRequestWithProperExceptionMessage(String sortParameters, boolean isHappyPath) {
+        if (isHappyPath) {
+            when(epaperService.findAllMatchingEpapersBy(any(), any())).thenReturn(new PageImpl<>(List.of(SOME_EPAPER, OTHER_EPAPER)));
+        }
+
+        MvcResult result = mockMvc.perform(get("/api/epapers").param("sort", sortParameters))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(isHappyPath
+                        ? status().isOk()
+                        : status().isBadRequest())
                 .andReturn();
-        assertTrue(result.getResponse().getContentAsString().contains("Invalid value(s) in sort parameter: [" + INVALID_PARAM + "]"));
+
+        assertTrue(result.getResponse().getContentAsString().contains(
+                isHappyPath ? "epapers" : "Invalid value(s) in sort parameter"
+        ));
+    }
+
+    private static Stream<Arguments> sortTestParams() {
+        return Stream.of(
+                Arguments.of("invalid_param", false),
+                Arguments.of("id,asc", true),
+                Arguments.of("dpi,desc", true),
+                Arguments.of("newspaperName,asc", true),
+                Arguments.of("newspaperName,", false),
+                Arguments.of("id,ascending", false),
+                Arguments.of("id,descending", false),
+                Arguments.of("", true)
+        );
     }
 
     @SneakyThrows
