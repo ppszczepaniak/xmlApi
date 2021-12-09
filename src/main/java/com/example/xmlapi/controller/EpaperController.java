@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.stereotype.Controller;
@@ -35,7 +36,7 @@ public class EpaperController {
     EpaperService epaperService;
     static List<String> VALID_SORT_PARAMS = List.of("asc", "desc", "id", "newspaperName", "width", "height", "dpi", "uploadTime", "fileName");
 
-    @PostMapping(value = "/epapers")
+    @PostMapping(value = "/epapers", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Long> uploadFile(@RequestParam("file") MultipartFile file) {
         log.info("XmlApiLog: Request processing started.");
 
@@ -46,7 +47,7 @@ public class EpaperController {
         return ResponseEntity.status(CREATED).body(epaper.getId());
     }
 
-    @GetMapping(value = "/epapers")
+    @GetMapping(value = "/epapers", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> findAllPaged(@RequestBody(required = false) EpaperDTO epaperFilter,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "5") int size,
@@ -90,31 +91,13 @@ public class EpaperController {
         return "desc".equals(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
     }
 
-    @ExceptionHandler(MultipartException.class)
-    ResponseEntity<XmlApiExceptionDTO> handleException(MultipartException exception) {
-        log.debug("MultipartException: " + exception.getMessage());
+    @ExceptionHandler({MultipartException.class, ServletException.class, HttpMessageConversionException.class, XmlApiException.class})
+    ResponseEntity<XmlApiExceptionDTO> handleException(Exception exception) {
+        log.info(exception.getClass().getSimpleName() + ": " + exception.getMessage());
+        if (exception instanceof XmlApiException) {
+            return ResponseEntity.status(((XmlApiException) exception).getHttpStatus()).body(XmlApiExceptionDTO.from(((XmlApiException) exception)));
+        }
         return ResponseEntity.status(BAD_REQUEST).body(
                 XmlApiExceptionDTO.from(new XmlApiException(exception.getMessage())));
     }
-
-    @ExceptionHandler(ServletException.class)
-    ResponseEntity<XmlApiExceptionDTO> handleException(ServletException exception) {
-        log.debug("ServletException: " + exception.getMessage());
-        return ResponseEntity.status(BAD_REQUEST).body(
-                XmlApiExceptionDTO.from(new XmlApiException(exception.getMessage())));
-    }
-
-    @ExceptionHandler(HttpMessageConversionException.class)
-    ResponseEntity<XmlApiExceptionDTO> handleException(HttpMessageConversionException exception) {
-        log.debug("HttpMessageConversionException: " + exception.getMessage());
-        return ResponseEntity.status(BAD_REQUEST).body(
-                XmlApiExceptionDTO.from(new XmlApiException(exception.getMessage())));
-    }
-
-    @ExceptionHandler(XmlApiException.class)
-    ResponseEntity<XmlApiExceptionDTO> handleException(XmlApiException exception) {
-        log.debug("XmlApiLog: XmlApiException: " + exception.getMessage());
-        return ResponseEntity.status(exception.getHttpStatus()).body(XmlApiExceptionDTO.from(exception));
-    }
-
 }
