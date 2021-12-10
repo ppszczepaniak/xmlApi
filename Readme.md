@@ -2,7 +2,7 @@
 
 # xmlApi
 
-Simple API that allows to uploading .xml files, validating them against
+Simple API that allows uploading .xml files, validating them against
 included [XSD schema](https://github.com/ppszczepaniak/xmlApi/blob/master/src/main/resources/xsdSchema/schema.xsd),
 persisting parsed data into SQL database and easy retrieving for frontend purposes. <br>
 Databases used: attached dockerized PostgreSQL and in-memory H2 (for testing purposes).
